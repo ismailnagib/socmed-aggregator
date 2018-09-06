@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="utf-8">
+    <title>HacktivGit - Home Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+    <style>
+      body {
+        padding-top: 65px;
+      }
+
+      .navbar-right p {
+        float: right;
+        line-height: 50px;
+        color: white;
+        margin-left: 10px;
+        margin-bottom: 0px;
+      }
+
+      .row {
+        display: flex;
+
+      }
+
+      .row > div {
+        flex: 1;
+        /* border: 1px solid grey; */
+        margin-top:10px;
+      }
+
+      .row-body {
+        height: 100vw;
+      }
+
+      .row-body .box {
+        border-right: 1px solid #eee;
+      }
+
+      .row-body div:last-child {
+        border-right: none;
+      }
+
+      input.search {
+        margin-bottom: 10px;
+      }
+
+    </style>
+  </head>
+  <body>
+    <script>
+      window.fbAsyncInit = function() {
+        FB.init({
+          appId            : 1370404409760808,
+          autoLogAppEvents : true,
+          xfbml            : true,
+          version          : 'v3.1'
+        });
+      };
+    
+      (function(d, s, id){
+         var js, fjs = d.getElementsByTagName(s)[0];
+         if (d.getElementById(id)) {return;}
+         js = d.createElement(s); js.id = id;
+         js.src = "https://connect.facebook.net/en_US/sdk.js";
+         fjs.parentNode.insertBefore(js, fjs);
+       }(document, 'script', 'facebook-jssdk'));
+    </script>
+    <div class="container">
+      <div class="row">
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+          <div class="container">
+            <a class="navbar-brand" href="#">HacktivGit</a>
+            <div class="navbar-right">
+              <img src="https://drive.google.com/uc?id=1Tx1Lbw1J4zI8_gAmAdC7QVO7YQmKo9eG" width="50px"/>
+              <p>ismailnagib</p>
+            </div>
+            <div id="fbButton">
+              <fb:login-button scope="public_profile,email" onlogin="checkLoginState();"></fb:login-button>
+            </div>
+            <div id="logOutButton">
+              <a href='#' onclick="logOut()">Log Out</a>
+            </div>
+          </div>
+        </nav>
+      </div>
+
+      <div class="row row-body ">
+        <div class="col-md-3 box">
+          <h4>Users</h4>
+          <ul style="list-style-type:none">
+            <li><a href="#" onclick="list('ismailnagib')">ismailnagib</a></li>
+            <li><a href="#" class='mustLogIn' onclick="list('windiana')">windiana</a></li>
+            <li><a href="#" class='mustLogIn' onclick="list('muhammadramadiansyah')">muhammadramadiansyah</a></li>
+          </ul>
+          <h7 id='mustLogInNotice'>You have to log in to see other users' repositories</h7>
+        </div>
+        <div class="col-md-3 box">
+          <input class="search" type="text" placeholder="Search..."></input>
+          <div class="list">
+          </div>
+        </div>
+        <div class="col-md-6 box">
+          <h1 id="reponame"></h1>
+          <p id="author"></p>
+          <hr>
+          <p id="description"></p>
+        </div>
+      </div>
+
+    </div>
+    <script>
+      function checkLoginState() {
+        FB.getLoginStatus(function(response) {
+          retrieveInfo(response);
+        });
+      }
+      
+      function retrieveInfo(response) {
+        showLogOut()
+        let token = response.authResponse.accessToken
+        $.ajax({
+          type: 'POST',
+          url: 'http://localhost:3000/user/login',
+          data: {accessToken: token}
+        })
+        .done(data => {
+          localStorage.setItem('jwtToken', data.token)
+        })
+        .fail(err => {
+          console.log(err)
+        })
+      }
+      
+      if (localStorage.getItem('jwtToken')) {
+        $.ajax({
+          type: 'POST',
+          url: 'http://localhost:3000/user/checklocalstorage',
+          data: {jwtToken: localStorage.getItem('jwtToken')}
+        })
+        .done(data => {
+          if (data.isLogin) {
+            showLogOut()
+          } else {
+            showLogIn()
+          }
+        })
+        .fail(err => {
+          console.log(err)
+        })
+      } else {
+        console.log('BBBBBBBBBBB')
+        showLogIn()
+      }
+      
+      function showLogIn() {
+        $('#fbButton').show()
+        $('#logOutButton').hide()
+        $('.mustLogIn').hide()
+        $('#mustLogInNotice').show()
+      }
+
+      function showLogOut() {
+        $('#fbButton').hide()
+        $('#logOutButton').show()
+        $('.mustLogIn').show()
+        $('#mustLogInNotice').hide()
+      }
+      
+      function logOut() {
+        localStorage.removeItem('jwtToken')
+        showLogIn()
+      }
+
+      var name = 'ismailnagib'
+
+      $.ajax({
+        url: 'http://localhost:3000/repo',
+        dataType: 'json'
+      })
+      .done((data) => {
+          $('.list').text("")
+          $('.list').append(
+            `<div><br><h5>Starred Repositories</h5></div>`
+          )
+          data.list.forEach(datum => {
+              $('.list').append(
+                `<div class="card-body">
+                    <h5 class="card-title">
+                        <a href="#" onclick="more('${datum.name}','${datum.description}','${datum.owner.login}')">${datum.name}</a>
+                    </h5>
+                        <p class="card-text">${datum.description}</p>
+                    <p class="card-text">${datum.stargazers_count} Star(s)</p>
+                </div>`
+              )
+          })
+      })
+      .fail((err) => {
+        console.log(err)
+      })
+
+      $('.search').keyup(() => {
+        let keyword = $('.search').val()
+        if (keyword.length > 0) {
+          searchByName(keyword)
+        } else {
+          searchByName(' ')
+        }
+      })
+
+      function searchByName(keyword) {
+        $.ajax({
+          url: `http://localhost:3000/repo/searchByName/${keyword}/${name}`,
+          dataType: 'json'
+        })
+        .done((data) => {
+          $('.list').text("")
+          $('.list').append(
+            `<div><br><h5>All Repositories</h5><h7>owned by ${name}</h7></div>`
+          )
+          data.list.items.forEach(datum => {
+              $('.list').append(
+                `<div class="card-body">
+                    <h5 class="card-title">
+                        <a href="#" onclick="more('${datum.name}','${datum.description}','${datum.owner.login}')">${datum.name}</a>
+                    </h5>
+                        <p class="card-text">${datum.description}</p>
+                    <p class="card-text">${datum.stargazers_count} Star(s)</p>
+                </div>`
+              )
+          })
+        })
+        .fail((err) => {
+          console.log(err)
+        })
+      }
+
+      function more(repoName, description, ownerName) {
+        name = ownerName
+        $('#reponame').text("")
+        $('#reponame').append(repoName)
+        $('#author').text("")
+        $('#author').append(`by <a href='https://github.com/${ownerName}'>${ownerName}`)
+        $('#description').text("")
+        $('#description').append(description)
+        searchByName(' ')
+      }
+
+      function list(newName) {
+        name = newName
+        searchByName(' ')
+      }
+    </script>
+  </body>
+</html>
