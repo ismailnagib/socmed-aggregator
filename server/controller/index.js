@@ -153,7 +153,6 @@ class Controller {
                 if (err) {
                     console.log(err)
                 } else {
-                    // console.log('AAAAAAAAAAAAAAAAAAAAAA', findResult)
                     if(findResult) {
                         jwt.sign({
                             id: result.data.id,
@@ -167,7 +166,6 @@ class Controller {
                             }
                         })
                     } else {
-                        // console.log('================ ELSE')
                         User.create({
                             email: result.data.email,
                             name: result.data.name
@@ -202,7 +200,6 @@ class Controller {
             if (err) {
                 res.status(500).json({message: err.message})
             } else {
-                console.log(decoded)
                 User.findOne({email: decoded.email}, (err, findResult) => {
                     if (err) {
                         res.status(500).json({message: err.message})
